@@ -84,6 +84,35 @@ local function get_request_url()
 end
 
 
+local function get_ngx_vars()
+  local var = ngx.var
+  return {
+    uri                = var.uri,
+    host               = var.host,
+    hostname           = var.hostname,
+    https              = var.https,
+    scheme             = var.scheme,
+    is_args            = var.is_args,
+    server_addr        = var.server_addr,
+    server_port        = var.server_port,
+    server_name        = var.server_name,
+    server_protocol    = var.server_protocol,
+    remote_addr        = var.remote_addr,
+    remote_port        = var.remote_port,
+    realip_remote_addr = var.realip_remote_addr,
+    realip_remote_port = var.realip_remote_port,
+    binary_remote_addr = var.binary_remote_addr,
+    request            = var.request,
+    request_uri        = var.request_uri,
+    request_time       = var.request_time,
+    request_length     = var.request_length,
+    request_method     = var.request_method,
+    bytes_received     = var.bytes_received,
+    ssl_server_name    = var.ssl_server_name or "no SNI",
+  }
+end
+
+
 local function parse_post_data(headers)
   local cjson_safe         = require "cjson.safe"
   local data, form, params = "", {}, cjson_safe.null
@@ -170,6 +199,7 @@ return {
   send_text_response          = send_text_response,
   send_json_response          = send_json_response,
   get_request_url             = get_request_url,
+  get_ngx_vars                = get_ngx_vars,
   parse_post_data             = parse_post_data,
   serve_web_sockets           = serve_web_sockets,
 }

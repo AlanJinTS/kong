@@ -9,8 +9,11 @@ local BIN_PATH = "bin/kong"
 local TEST_CONF_PATH = "spec/kong_tests.conf"
 local CUSTOM_PLUGIN_PATH = "./spec/fixtures/custom_plugins/?.lua"
 local MOCK_UPSTREAM_PROTOCOL = "http"
+local MOCK_UPSTREAM_SSL_PROTOCOL = "https"
 local MOCK_UPSTREAM_HOST = "127.0.0.1"
+local MOCK_UPSTREAM_HOSTNAME = "localhost"
 local MOCK_UPSTREAM_PORT = 55555
+local MOCK_UPSTREAM_SSL_PORT = 55556
 
 local conf_loader = require "kong.conf_loader"
 local DAOFactory = require "kong.dao.factory"
@@ -396,7 +399,7 @@ local function udp_server(port)
       server:close()
       return data, err
     end
-  }, port or 9999)
+  }, port or MOCK_UPSTREAM_PORT)
 
   thread:start()
 
@@ -922,12 +925,19 @@ return {
   bin_path = BIN_PATH,
   test_conf = conf,
   test_conf_path = TEST_CONF_PATH,
+  mock_upstream_hostname = MOCK_UPSTREAM_HOSTNAME,
   mock_upstream_protocol = MOCK_UPSTREAM_PROTOCOL,
   mock_upstream_host     = MOCK_UPSTREAM_HOST,
   mock_upstream_port     = MOCK_UPSTREAM_PORT,
   mock_upstream_url      = MOCK_UPSTREAM_PROTOCOL .. "://" ..
                            MOCK_UPSTREAM_HOST .. ':' ..
                            MOCK_UPSTREAM_PORT,
+
+  mock_upstream_ssl_protocol = MOCK_UPSTREAM_SSL_PROTOCOL,
+  mock_upstream_ssl_port     = MOCK_UPSTREAM_SSL_PORT,
+  mock_upstream_ssl_url      = MOCK_UPSTREAM_SSL_PROTOCOL .. "://" ..
+                               MOCK_UPSTREAM_HOST .. ':' ..
+                               MOCK_UPSTREAM_SSL_PORT,
 
   -- Kong testing helpers
   execute = exec,

@@ -185,11 +185,6 @@ describe("Router", function()
           upstream_url = helpers.mock_upstream_url,
           hosts        = { "mock_upstream" },
         },
-        {
-          name         = "api-2",
-          upstream_url = "http://localhost:9999",
-          hosts        = { "localhost" },
-        },
       }
 
       assert(helpers.start_kong({
@@ -223,15 +218,15 @@ describe("Router", function()
     it("does proxy an empty querystring if URI does not contain arguments", function()
       local res = assert(client:send {
         method = "GET",
-        path   = "/get?",
+        path   = "/request?",
         headers = {
-          ["Host"] = "localhost",
+          ["Host"] = "mock_upstream",
         },
       })
 
       local body = assert.res_status(200, res)
       local json = cjson.decode(body)
-      assert.matches("/get%?$", json.vars.request_uri)
+      assert.matches("/request%?$", json.vars.request_uri)
     end)
 
     it("does proxy a querystring with an empty value", function()
@@ -261,7 +256,7 @@ describe("Router", function()
         {
           name         = "api-2",
           upstream_url = helpers.mock_upstream_url,
-          urisl        = "/foo/../bar",
+          uris         = "/foo/../bar",
         },
       }
 
@@ -368,23 +363,23 @@ describe("Router", function()
     setup(function()
       insert_apis {
         {
-          name = "api-1",
+          name          = "api-1",
           preserve_host = true,
-          upstream_url = "http://localhost:9999/headers-inspect",
-          hosts = "preserved.com",
+          upstream_url  = helpers.mock_upstream_url .. "/request",
+          hosts         = "preserved.com",
         },
         {
-          name = "api-2",
+          name          = "api-2",
           preserve_host = false,
-          upstream_url = "http://localhost:9999/headers-inspect",
-          hosts = "discarded.com",
+          upstream_url  = helpers.mock_upstream_url .. "/request",
+          hosts         = "discarded.com",
         },
         {
-          name = "api-3",
-          strip_uri = false,
+          name          = "api-3",
+          strip_uri     = false,
           preserve_host = true,
-          upstream_url = "http://localhost:9999",
-          uris = "/headers-inspect",
+          upstream_url  = helpers.mock_upstream_url,
+          uris          = "/request",
         }
       }
 
@@ -397,79 +392,81 @@ describe("Router", function()
       helpers.stop_kong()
     end)
 
-    describe(" = false (default)", function()
+    describe("x = false (default)", function()
       it("uses hostname from upstream_url", function()
         local res = assert(client:send {
-          method = "GET",
-          path = "/get",
+          method  = "GET",
+          path    = "/get",
           headers = { ["Host"] = "discarded.com" },
         })
 
         local body = assert.res_status(200, res)
         local json = cjson.decode(body)
-        assert.matches("localhost", json.host, nil, true) -- not testing :port
+        assert.matches(helpers.mock_upstream_host,
+                       json.headers.host, nil, true) -- not testing :port
       end)
 
       it("uses port value from upstream_url if not default", function()
         local res = assert(client:send {
-          method = "GET",
-          path = "/get",
+          method  = "GET",
+          path    = "/get",
           headers = { ["Host"] = "discarded.com" },
         })
 
         local body = assert.res_status(200, res)
         local json = cjson.decode(body)
-        assert.matches(":9999", json.host, nil, true) -- not testing hostname
+        assert.matches(":" .. helpers.mock_upstream_port,
+                        json.headers.host, nil, true) -- not testing hostname
       end)
     end)
 
     describe(" = true", function()
       it("forwards request Host", function()
         local res = assert(client:send {
-          method = "GET",
-          path = "/",
+          method  = "GET",
+          path    = "/",
           headers = { ["Host"] = "preserved.com" },
         })
 
         local body = assert.res_status(200, res)
         local json = cjson.decode(body)
-        assert.equal("preserved.com", json.host)
+        assert.equal("preserved.com", json.headers.host)
       end)
 
       it("forwards request Host:Port even if port is default", function()
         local res = assert(client:send {
-          method = "GET",
-          path = "/get",
+          method  = "GET",
+          path    = "/get",
           headers = { ["Host"] = "preserved.com:80" },
         })
 
         local body = assert.res_status(200, res)
         local json = cjson.decode(body)
-        assert.equal("preserved.com:80", json.host)
+        assert.equal("preserved.com:80", json.headers.host)
       end)
 
       it("forwards request Host:Port if port isn't default", function()
         local res = assert(client:send {
-          method = "GET",
-          path = "/get",
+          method  = "GET",
+          path    = "/get",
           headers = { ["Host"] = "preserved.com:123" },
         })
 
         local body = assert.res_status(200, res)
         local json = cjson.decode(body)
-        assert.equal("preserved.com:123", json.host)
+        assert.equal("preserved.com:123", json.headers.host)
       end)
 
       it("forwards request Host even if not matched by [hosts]", function()
         local res = assert(client:send {
-          method = "GET",
-          path = "/headers-inspect",
+          method  = "GET",
+          path    = "/get",
           headers = { ["Host"] = "preserved.com" },
         })
 
         local body = assert.res_status(200, res)
         local json = cjson.decode(body)
-        assert.equal("preserved.com", json.host)
+        assert.equal("preserved.com", json.headers.host)
       end)
     end)
   end)
@@ -479,14 +476,14 @@ describe("Router", function()
     setup(function()
       insert_apis {
         {
-          name = "root-uri",
+          name         = "root-uri",
           upstream_url = helpers.mock_upstream_url,
-          uris = "/",
+          uris         = "/",
         },
         {
-          name = "fixture-api",
+          name         = "fixture-api",
           upstream_url = helpers.mock_upstream_url,
-          uris = "/foobar",
+          uris         = "/foobar",
         },
       }
 
@@ -607,50 +604,50 @@ describe("Router", function()
     local checks = {
       -- upstream url    uris            request path    expected path           strip uri
       {  "/",            "/",            "/",            "/",                    nil       },
-      {  "/",            "/",            "/foo/bar",     "/foo/bar",             nil       },
-      {  "/",            "/",            "/foo/bar/",    "/foo/bar/",            nil       },
-      {  "/",            "/foo/bar",     "/foo/bar",     "/",                    nil       },
-      {  "/",            "/foo/bar/",    "/foo/bar/",    "/",                    nil       },
-      {  "/foo/bar",     "/",            "/",            "/foo/bar",             nil       },
-      {  "/foo/bar",     "/",            "/foo/bar",     "/foo/bar/foo/bar",     nil       },
-      {  "/foo/bar",     "/",            "/foo/bar/",    "/foo/bar/foo/bar/",    nil       },
-      {  "/foo/bar",     "/foo/bar",     "/foo/bar",     "/foo/bar",             nil       },
-      {  "/foo/bar",     "/foo/bar/",    "/foo/bar/",    "/foo/bar/",            nil       },
-      {  "/foo/bar/",    "/",            "/",            "/foo/bar/",            nil       },
-      {  "/foo/bar/",    "/",            "/foo/bar",     "/foo/bar/foo/bar",     nil       },
-      {  "/foo/bar/",    "/",            "/foo/bar/",    "/foo/bar/foo/bar/",    nil       },
-      {  "/foo/bar/",    "/foo/bar",     "/foo/bar",     "/foo/bar",             nil       },
-      {  "/foo/bar/",    "/foo/bar/",    "/foo/bar/",    "/foo/bar/",            nil       },
+      {  "/",            "/",            "/get/bar",     "/get/bar",             nil       },
+      {  "/",            "/",            "/get/bar/",    "/get/bar/",            nil       },
+      {  "/",            "/get/bar",     "/get/bar",     "/",                    nil       },
+      {  "/",            "/get/bar/",    "/get/bar/",    "/",                    nil       },
+      {  "/get/bar",     "/",            "/",            "/get/bar",             nil       },
+      {  "/get/bar",     "/",            "/get/bar",     "/get/bar/get/bar",     nil       },
+      {  "/get/bar",     "/",            "/get/bar/",    "/get/bar/get/bar/",    nil       },
+      {  "/get/bar",     "/get/bar",     "/get/bar",     "/get/bar",             nil       },
+      {  "/get/bar",     "/get/bar/",    "/get/bar/",    "/get/bar/",            nil       },
+      {  "/get/bar/",    "/",            "/",            "/get/bar/",            nil       },
+      {  "/get/bar/",    "/",            "/get/bar",     "/get/bar/get/bar",     nil       },
+      {  "/get/bar/",    "/",            "/get/bar/",    "/get/bar/get/bar/",    nil       },
+      {  "/get/bar/",    "/get/bar",     "/get/bar",     "/get/bar",             nil       },
+      {  "/get/bar/",    "/get/bar/",    "/get/bar/",    "/get/bar/",            nil       },
       {  "/",            "/",            "/",            "/",                    true      },
-      {  "/",            "/",            "/foo/bar",     "/foo/bar",             true      },
-      {  "/",            "/",            "/foo/bar/",    "/foo/bar/",            true      },
-      {  "/",            "/foo/bar",     "/foo/bar",     "/",                    true      },
-      {  "/",            "/foo/bar/",    "/foo/bar/",    "/",                    true      },
-      {  "/foo/bar",     "/",            "/",            "/foo/bar",             true      },
-      {  "/foo/bar",     "/",            "/foo/bar",     "/foo/bar/foo/bar",     true      },
-      {  "/foo/bar",     "/",            "/foo/bar/",    "/foo/bar/foo/bar/",    true      },
-      {  "/foo/bar",     "/foo/bar",     "/foo/bar",     "/foo/bar",             true      },
-      {  "/foo/bar",     "/foo/bar/",    "/foo/bar/",    "/foo/bar/",            true      },
-      {  "/foo/bar/",    "/",            "/",            "/foo/bar/",            true      },
-      {  "/foo/bar/",    "/",            "/foo/bar",     "/foo/bar/foo/bar",     true      },
-      {  "/foo/bar/",    "/",            "/foo/bar/",    "/foo/bar/foo/bar/",    true      },
-      {  "/foo/bar/",    "/foo/bar",     "/foo/bar",     "/foo/bar",             true      },
-      {  "/foo/bar/",    "/foo/bar/",    "/foo/bar/",    "/foo/bar/",            true      },
+      {  "/",            "/",            "/get/bar",     "/get/bar",             true      },
+      {  "/",            "/",            "/get/bar/",    "/get/bar/",            true      },
+      {  "/",            "/get/bar",     "/get/bar",     "/",                    true      },
+      {  "/",            "/get/bar/",    "/get/bar/",    "/",                    true      },
+      {  "/get/bar",     "/",            "/",            "/get/bar",             true      },
+      {  "/get/bar",     "/",            "/get/bar",     "/get/bar/get/bar",     true      },
+      {  "/get/bar",     "/",            "/get/bar/",    "/get/bar/get/bar/",    true      },
+      {  "/get/bar",     "/get/bar",     "/get/bar",     "/get/bar",             true      },
+      {  "/get/bar",     "/get/bar/",    "/get/bar/",    "/get/bar/",            true      },
+      {  "/get/bar/",    "/",            "/",            "/get/bar/",            true      },
+      {  "/get/bar/",    "/",            "/get/bar",     "/get/bar/get/bar",     true      },
+      {  "/get/bar/",    "/",            "/get/bar/",    "/get/bar/get/bar/",    true      },
+      {  "/get/bar/",    "/get/bar",     "/get/bar",     "/get/bar",             true      },
+      {  "/get/bar/",    "/get/bar/",    "/get/bar/",    "/get/bar/",            true      },
       {  "/",            "/",            "/",            "/",                    false     },
-      {  "/",            "/",            "/foo/bar",     "/foo/bar",             false     },
-      {  "/",            "/",            "/foo/bar/",    "/foo/bar/",            false     },
-      {  "/",            "/foo/bar",     "/foo/bar",     "/foo/bar",             false     },
-      {  "/",            "/foo/bar/",    "/foo/bar/",    "/foo/bar/",            false     },
-      {  "/foo/bar",     "/",            "/",            "/foo/bar",             false     },
-      {  "/foo/bar",     "/",            "/foo/bar",     "/foo/bar/foo/bar",     false     },
-      {  "/foo/bar",     "/",            "/foo/bar/",    "/foo/bar/foo/bar/",    false     },
-      {  "/foo/bar",     "/foo/bar",     "/foo/bar",     "/foo/bar/foo/bar",     false     },
-      {  "/foo/bar",     "/foo/bar/",    "/foo/bar/",    "/foo/bar/foo/bar/",    false     },
-      {  "/foo/bar/",    "/",            "/",            "/foo/bar/",            false     },
-      {  "/foo/bar/",    "/",            "/foo/bar",     "/foo/bar/foo/bar",     false     },
-      {  "/foo/bar/",    "/",            "/foo/bar/",    "/foo/bar/foo/bar/",    false     },
-      {  "/foo/bar/",    "/foo/bar",     "/foo/bar",     "/foo/bar/foo/bar",     false     },
-      {  "/foo/bar/",    "/foo/bar/",    "/foo/bar/",    "/foo/bar/foo/bar/",    false     },
+      {  "/",            "/",            "/get/bar",     "/get/bar",             false     },
+      {  "/",            "/",            "/get/bar/",    "/get/bar/",            false     },
+      {  "/",            "/get/bar",     "/get/bar",     "/get/bar",             false     },
+      {  "/",            "/get/bar/",    "/get/bar/",    "/get/bar/",            false     },
+      {  "/get/bar",     "/",            "/",            "/get/bar",             false     },
+      {  "/get/bar",     "/",            "/get/bar",     "/get/bar/get/bar",     false     },
+      {  "/get/bar",     "/",            "/get/bar/",    "/get/bar/get/bar/",    false     },
+      {  "/get/bar",     "/get/bar",     "/get/bar",     "/get/bar/get/bar",     false     },
+      {  "/get/bar",     "/get/bar/",    "/get/bar/",    "/get/bar/get/bar/",    false     },
+      {  "/get/bar/",    "/",            "/",            "/get/bar/",            false     },
+      {  "/get/bar/",    "/",            "/get/bar",     "/get/bar/get/bar",     false     },
+      {  "/get/bar/",    "/",            "/get/bar/",    "/get/bar/get/bar/",    false     },
+      {  "/get/bar/",    "/get/bar",     "/get/bar",     "/get/bar/get/bar",     false     },
+      {  "/get/bar/",    "/get/bar/",    "/get/bar/",    "/get/bar/get/bar/",    false     },
     }
 
     setup(function()
@@ -660,7 +657,7 @@ describe("Router", function()
         assert(helpers.dao.apis:insert {
             name         = "localbin-" .. i,
             strip_uri    = args[5],
-            upstream_url = "http://localhost:9999" .. args[1],
+            upstream_url = helpers.mock_upstream_url .. args[1],
             uris         = {
               args[2],
             },
