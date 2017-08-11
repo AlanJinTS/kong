@@ -25,7 +25,7 @@ local Factory = require "kong.dao.factory"
 local api_tbl = {
   name = "example",
   hosts = { "example.org" },
-  uris = { "/exmaple" },
+  uris = { "/example" },
   strip_uri = true,
   upstream_url = "https://example.org"
 }
@@ -277,7 +277,7 @@ helpers.for_each_dao(function(kong_config)
         assert.equal("test_app", rows[1].name)
         assert.is_table(rows[1].redirect_uri)
         assert.equal(2, #rows[1].redirect_uri)
-        assert.same({"https://example.org", "https://example.com"}, rows[1].redirect_uri)
+        assert.same({ "https://example.org", "https://example.com" }, rows[1].redirect_uri)
       end)
       pending("return empty table if no row match", function()
         local rows, err = apis:find_all {
@@ -509,7 +509,7 @@ helpers.for_each_dao(function(kong_config)
       it("update with arbitrary filtering keys", function()
         api_fixture.name = "updated"
 
-        local api, err = apis:update(api_fixture, {name = "example"})
+        local api, err = apis:update(api_fixture, { name = "example" })
         assert.falsy(err)
         assert.same(api_fixture, api)
         assert.raw_table(api)

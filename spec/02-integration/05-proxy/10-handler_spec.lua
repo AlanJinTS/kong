@@ -8,12 +8,12 @@ describe("OpenResty phases", function()
       setup(function()
         -- insert plugin-less api and a global plugin
         assert(helpers.dao.apis:insert {
-          name = "mock_upstream",
-          hosts = { "mock_upstream" },
+          name         = "mock_upstream",
+          hosts        = { "mock_upstream" },
           upstream_url = helpers.mock_upstream_url,
         })
         assert(helpers.dao.plugins:insert {
-          name = "rewriter",
+          name   = "rewriter",
           config = {
             value = "global plugin",
           },
@@ -34,8 +34,8 @@ describe("OpenResty phases", function()
 
       it("runs", function()
         local res = assert(proxy_client:send {
-          method = "GET",
-          path = "/request",
+          method  = "GET",
+          path    = "/request",
           headers = {
             host = "mock_upstream",
           },
@@ -52,13 +52,13 @@ describe("OpenResty phases", function()
       setup(function()
         -- api specific plugin
         local api2 = assert(helpers.dao.apis:insert {
-          name = "mock_upstream",
-          hosts = { "mock_upstream" },
+          name         = "mock_upstream",
+          hosts        = { "mock_upstream" },
           upstream_url = helpers.mock_upstream_url,
         })
         assert(helpers.dao.plugins:insert {
           api_id = api2.id,
-          name = "rewriter",
+          name   = "rewriter",
           config = {
             value = "api-specific plugin",
           },
@@ -79,8 +79,8 @@ describe("OpenResty phases", function()
 
       it("doesn't run", function()
         local res = assert(proxy_client:send {
-          method = "GET",
-          path = "/request",
+          method  = "GET",
+          path    = "/request",
           headers = {
             host = "mock_upstream",
           },
@@ -96,25 +96,25 @@ describe("OpenResty phases", function()
       setup(function()
         -- consumer specific plugin
         local api3 = assert(helpers.dao.apis:insert {
-          name = "mock_upstream",
-          hosts = { "mock_upstream" },
+          name         = "mock_upstream",
+          hosts        = { "mock_upstream" },
           upstream_url = helpers.mock_upstream_url,
         })
         assert(helpers.dao.plugins:insert {
           api_id = api3.id,
-          name = "key-auth",
+          name   = "key-auth",
         })
         local consumer3 = assert(helpers.dao.consumers:insert {
           username = "test-consumer",
         })
         assert(helpers.dao.keyauth_credentials:insert {
-          key = "kong",
-          consumer_id = consumer3.id
+          key         = "kong",
+          consumer_id = consumer3.id,
         })
         assert(helpers.dao.plugins:insert {
           consumer_id = consumer3.id,
-          name = "rewriter",
-          config = {
+          name        = "rewriter",
+          config      = {
             value = "consumer-specific plugin",
           },
         })
@@ -134,11 +134,11 @@ describe("OpenResty phases", function()
 
       it("doesn't run", function()
         local res = assert(proxy_client:send {
-          method = "GET",
-          path = "/request",
+          method  = "GET",
+          path    = "/request",
           headers = {
-            host = "mock_upstream",
-            apikey = "kong"
+            host   = "mock_upstream",
+            apikey = "kong",
           },
         })
         assert.response(res).has.status(200)

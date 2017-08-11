@@ -57,34 +57,34 @@ describe("Router", function()
     setup(function()
       insert_apis {
         {
-          name = "api-1",
+          name         = "api-1",
           upstream_url = helpers.mock_upstream_url,
-          methods = { "GET" },
+          methods      = { "GET" },
         },
         {
-          name = "api-2",
+          name         = "api-2",
           upstream_url = helpers.mock_upstream_url,
-          methods = { "POST", "PUT" },
-          uris = { "/post", "/put" },
-          strip_uri = false,
+          methods      = { "POST", "PUT" },
+          uris         = { "/post", "/put" },
+          strip_uri    = false,
         },
         {
-          name = "api-3",
+          name         = "api-3",
           upstream_url = helpers.mock_upstream_url .. "/status",
-          uris = { [[/mock_upstream]] },
-          strip_uri = true,
+          uris         = { [[/mock_upstream]] },
+          strip_uri    = true,
         },
         {
-          name = "api-4",
+          name         = "api-4",
           upstream_url = helpers.mock_upstream_url .. "/basic-auth",
-          uris = { "/private" },
-          strip_uri = false,
+          uris         = { "/private" },
+          strip_uri    = false,
         },
         {
-          name = "api-5",
+          name         = "api-5",
           upstream_url = helpers.mock_upstream_url .. "/anything",
-          uris = { [[/users/\d+/profile]] },
-          strip_uri = true,
+          uris         = { [[/users/\d+/profile]] },
+          strip_uri    = true,
         },
       }
 
@@ -135,8 +135,8 @@ describe("Router", function()
     describe("API with a path component in its upstream_url", function()
       it("with strip_uri = true", function()
         local res = assert(client:send {
-          method = "GET",
-          path = "/mock_upstream/201",
+          method  = "GET",
+          path    = "/mock_upstream/201",
           headers = { ["kong-debug"] = 1 },
         })
 
@@ -181,14 +181,14 @@ describe("Router", function()
     setup(function()
       insert_apis {
         {
-          name = "api-1",
+          name         = "api-1",
           upstream_url = helpers.mock_upstream_url,
-          hosts = { "mock_upstream" },
+          hosts        = { "mock_upstream" },
         },
         {
-          name = "api-2",
+          name         = "api-2",
           upstream_url = "http://localhost:9999",
-          hosts = { "localhost" },
+          hosts        = { "localhost" },
         },
       }
 
@@ -203,9 +203,9 @@ describe("Router", function()
 
     it("preserves URI arguments", function()
       local res = assert(client:send {
-        method = "GET",
-        path   = "/get",
-        query  = {
+        method  = "GET",
+        path    = "/get",
+        query   = {
           foo   = "bar",
           hello = "world",
         },
@@ -236,8 +236,8 @@ describe("Router", function()
 
     it("does proxy a querystring with an empty value", function()
       local res = assert(client:send {
-        method = "GET",
-        path   = "/get?hello",
+        method  = "GET",
+        path    = "/get?hello",
         headers = {
           ["Host"] = "mock_upstream",
         },
@@ -254,14 +254,14 @@ describe("Router", function()
     setup(function()
       insert_apis {
         {
-          name = "api-1",
+          name         = "api-1",
           upstream_url = helpers.mock_upstream_url,
-          uris = "/endel%C3%B8st",
+          uris         = "/endel%C3%B8st",
         },
         {
-          name = "api-2",
+          name         = "api-2",
           upstream_url = helpers.mock_upstream_url,
-          uris = "/foo/../bar",
+          urisl        = "/foo/../bar",
         },
       }
 
@@ -566,15 +566,15 @@ describe("Router", function()
     setup(function()
       insert_apis {
         {
-          name = "root-api",
-          hosts = "api.com",
-          uris = "/root",
+          name         = "root-api",
+          hosts        = "api.com",
+          uris         = "/root",
           upstream_url = helpers.mock_upstream_url,
         },
         {
-          name = "fixture-api",
-          hosts = "api.com",
-          uris = "/root/fixture",
+          name         = "fixture-api",
+          hosts        = "api.com",
+          uris         = "/root/fixture",
           upstream_url = helpers.mock_upstream_url,
         },
       }

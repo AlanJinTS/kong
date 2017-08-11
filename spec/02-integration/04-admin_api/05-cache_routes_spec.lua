@@ -8,13 +8,13 @@ describe("Admin API /cache", function()
 
   setup(function()
     local api = assert(helpers.dao.apis:insert {
-      name = "api-cache",
-      hosts = { "cache.com" },
-      upstream_url = helpers.mock_upstream_url
+      name         = "api-cache",
+      hosts        = { "cache.com" },
+      upstream_url = helpers.mock_upstream_url,
     })
     assert(helpers.dao.plugins:insert {
       api_id = api.id,
-      name = "cache",
+      name   = "cache",
     })
 
     assert(helpers.start_kong({

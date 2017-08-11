@@ -114,16 +114,16 @@ describe("core entities are invalidated with db: " .. kong_conf.database, functi
 
     it("on create", function()
       local admin_res = assert(admin_client_1:send {
-        method = "POST",
-        path   = "/apis",
-        body   = {
+        method  = "POST",
+        path    = "/apis",
+        body    = {
           name         = "example",
           hosts        = "example.com",
           upstream_url = helpers.mock_upstream_url,
         },
         headers = {
           ["Content-Type"] = "application/json",
-        }
+        },
       })
       assert.res_status(201, admin_res)
 
@@ -153,16 +153,16 @@ describe("core entities are invalidated with db: " .. kong_conf.database, functi
 
     it("on update", function()
       local admin_res = assert(admin_client_1:send {
-        method = "PATCH",
-        path   = "/apis/example",
-        body   = {
+        method  = "PATCH",
+        path    = "/apis/example",
+        body    = {
           name         = "example",
           hosts        = "example.com",
           upstream_url = helpers.mock_upstream_url .. "/status/418",
         },
         headers = {
           ["Content-Type"] = "application/json",
-        }
+        },
       })
       assert.res_status(200, admin_res)
 
@@ -424,11 +424,11 @@ describe("core entities are invalidated with db: " .. kong_conf.database, functi
       -- create API
 
       local admin_res = assert(admin_client_1:send {
-        method = "POST",
-        path   = "/apis",
-        body   = {
-          name  = "dummy-api",
-          hosts = "dummy.com",
+        method  = "POST",
+        path    = "/apis",
+        body    = {
+          name         = "dummy-api",
+          hosts        = "dummy.com",
           upstream_url = helpers.mock_upstream_url,
         },
         headers = {

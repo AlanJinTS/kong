@@ -6,14 +6,14 @@ describe("URI encoding", function()
 
   setup(function()
     assert(helpers.dao.apis:insert {
-      name = "api-1",
-      hosts = { "mock_upstream" },
+      name         = "api-1",
+      hosts        = { "mock_upstream" },
       upstream_url = helpers.mock_upstream_url,
     })
 
     assert(helpers.dao.apis:insert {
-      name = "api-2",
-      hosts = { "mock_upstream" },
+      name         = "api-2",
+      hosts        = { "mock_upstream" },
       upstream_url = helpers.mock_upstream_url,
     })
 
@@ -45,11 +45,11 @@ describe("URI encoding", function()
     -- https://github.com/Mashape/kong/pull/1975
 
     local res = assert(client:send {
-      method = "GET",
-      path = "/get?limit=25&where=%7B%22or%22:%5B%7B%22name%22:%7B%22like%22:%22%25bac%25%22%7D%7D%5D%7D",
+      method  = "GET",
+      path    = "/get?limit=25&where=%7B%22or%22:%5B%7B%22name%22:%7B%22like%22:%22%25bac%25%22%7D%7D%5D%7D",
       headers = {
-        ["Host"] = "mock_upstream"
-      }
+        ["Host"] = "mock_upstream",
+      },
     })
 
     local body = assert.res_status(200, res)
@@ -65,11 +65,11 @@ describe("URI encoding", function()
     -- https://github.com/Mashape/kong/issues/1480
 
     local res = assert(client:send {
-      method = "GET",
-      path = "/request?param=1.2.3",
+      method  = "GET",
+      path    = "/request?param=1.2.3",
       headers = {
-        ["Host"] = "mock_upstream"
-      }
+        ["Host"] = "mock_upstream",
+      },
     })
 
     local body = assert.res_status(200, res)
@@ -83,11 +83,11 @@ describe("URI encoding", function()
     -- https://github.com/Mashape/kong/issues/749
 
     local res = assert(client:send {
-      method = "GET",
-      path = "/request?param=abc%7Cdef",
+      method  = "GET",
+      path    = "/request?param=abc%7Cdef",
       headers = {
-        ["Host"] = "mock_upstream"
-      }
+        ["Host"] = "mock_upstream",
+      },
     })
 
     local body = assert.res_status(200, res)
@@ -101,11 +101,11 @@ describe("URI encoding", function()
     -- https://github.com/Mashape/kong/issues/688
 
     local res = assert(client:send {
-      method = "GET",
-      path = "/request/foo%2Fbar",
+      method  = "GET",
+      path    = "/request/foo%2Fbar",
       headers = {
         ["Host"] = "mock_upstream",
-      }
+      },
     })
 
     local body = assert.res_status(200, res)
@@ -124,7 +124,7 @@ describe("URI encoding", function()
       path       = "/request/auth%7C123",
       headers    = {
         ["Host"] = "mock_upstream",
-      }
+      },
     })
 
     local body = assert.res_status(200, res)
